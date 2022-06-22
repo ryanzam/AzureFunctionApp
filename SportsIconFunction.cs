@@ -30,7 +30,8 @@ namespace AFApp
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var data = JsonConvert.DeserializeObject<SportsIconCreateModel>(requestBody);
 
-            var sIcon = new SportsIcon() { Name = data.Name, NickName = data.NickName, DateOfBirth = data.DateOfBirth, Sports = data.Sports };
+            //id -> just for demo
+            var sIcon = new SportsIcon() { Id = new Random().Next(4, 1000), Name = data.Name, NickName = data.NickName, DateOfBirth = data.DateOfBirth, Sports = data.Sports };
             SportsIcons.Add(sIcon);
 
             string responseMessage = string.IsNullOrEmpty(requestBody)
@@ -58,6 +59,48 @@ namespace AFApp
 
             var result = SportsIcons.Find(s => s.Id == id);
             return new OkObjectResult(result);
+        }
+
+        [FunctionName("UpdateSportsIcon")]
+
+        public static async Task<IActionResult> UpdateSportsIcon(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sportsicon/{id}")] HttpRequest req,
+            ILogger log, int id)
+        {
+            var sIcon = SportsIcons.Find(s => s.Id == id);
+            if (sIcon == null)
+            {
+                return new NotFoundResult();
+            }
+            log.LogInformation("Updating Sports icon.");
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var updatedSIcon = JsonConvert.DeserializeObject<SportsIconUpdateModel>(requestBody);
+
+            sIcon.NickName = updatedSIcon.NickName;
+            sIcon.DateOfBirth = updatedSIcon.DateOfBirth;
+            sIcon.Sports = updatedSIcon.Sports;
+
+            string responseMessage = string.IsNullOrEmpty(requestBody)
+                ? "This HTTP triggered function executed successfully. Pass a details in request body for a personalized response."
+                : "This HTTP triggered function executed successfully. Updated : " + sIcon;
+
+            return new OkObjectResult(sIcon);
+        }
+
+        [FunctionName("DeleteSportsIcon")]
+        public static IActionResult DeleteSportsIcon(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "sportsicon/{id}")] HttpRequest req,
+            ILogger log, int id)
+        {
+            var sIcon = SportsIcons.Find(s => s.Id == id);
+            if (sIcon == null)
+            {
+                return new NotFoundResult();
+            }
+            log.LogInformation("Deleting Sports icon.");
+            SportsIcons.Remove(sIcon);
+            return new OkResult();
         }
     }
 }
